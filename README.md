@@ -1,50 +1,50 @@
-# Resumen: Auditoría Técnica de Krayin CRM (v2.1)
+# Auditoría Técnica de Krayin CRM (v2.1)
 
 ## 1. Información General
-- **Autor:** Hans Eliot Herzfelder.
-- **Tutor:** Raimundo Alcázar Quesada.
-- **Institución:** IME Smart Education - Máster en Ciberseguridad.
-- **Fecha:** Marzo de 2026.
-- **Objetivo Principal:** Evaluar la robustez técnica de Krayin CRM (v2.1), una solución de código abierto basada en Laravel, mediante despliegue en entorno virtualizado, análisis de vulnerabilidades y explotación controlada.
+- **Autor:** Hans Eliot Herzfelder
+- **Tutor:** Raimundo Alcázar Quesada
+- **Institución:** IME Smart Education — Máster en Ciberseguridad
+- **Fecha:** Marzo de 2026
+- **Objetivo:** Evaluar la robustez técnica de Krayin CRM (v2.1), solución de código abierto basada en Laravel, mediante su despliegue en entorno virtualizado, análisis sistemático de vulnerabilidades y explotación controlada de los hallazgos.
 
 ## 2. Metodología y Herramientas
-El proyecto simula una colaboración profesional entre la firma ficticia Umbrella Security Labs y una pequeña empresa del sector servicios. Se utilizaron estándares como OWASP Top 10 y PTES.
+El proyecto simula un encargo profesional entre la firma ficticia Umbrella Security Labs y una pequeña empresa del sector servicios. El alcance técnico se rige por los estándares OWASP Top 10 y PTES.
 
-**Herramientas clave:**
+**Herramientas empleadas:**
 - **Entorno:** Hipervisor Proxmox para replicar un escenario de producción real.
-- **Reconocimiento:** Nmap (puertos), WhatWeb y Curl (fingerprinting), Ffuf (mapeo de directorios).
-- **Escaneo Dinámico (DAST):** OWASP ZAP, Nikto, Skipfish y Wapiti.
-- **Análisis Estático (SAST):** Psalm (taint-analysis) y comandos Grep para revisión manual de código PHP/Laravel.
-- **Explotación:** Burp Suite (manipulación HTTP), Python (scripts de fuerza bruta) y Kali Linux.
+- **Reconocimiento:** Nmap (escaneo de puertos), WhatWeb y cURL (fingerprinting), ffuf (enumeración de directorios).
+- **Escaneo dinámico (DAST):** OWASP ZAP, Nikto, Skipfish y Wapiti.
+- **Análisis estático (SAST):** Psalm (taint analysis) y grep para revisión manual de código PHP/Laravel.
+- **Explotación:** Burp Suite (interceptación y manipulación HTTP), Python (scripts personalizados) y Kali Linux.
 
 ## 3. Fases del Proyecto
-- **Preparación y Despliegue:** Instalación de Krayin CRM sobre Ubuntu con Apache, configurado exclusivamente por HTTPS (puerto 443).
-- **Reconocimiento y Escaneo:** Identificación de tecnologías y detección de fallos de configuración (como falta de cabeceras de seguridad o archivos expuestos como robots.txt y web.config).
-- **Auditoría de Código Fuente:** Revisión de dependencias para hallar CVEs conocidos y análisis de flujos de datos.
-- **Explotación:** Validación práctica de los hallazgos mediante ataques dirigidos.
-- **Análisis e Informe:** Categorización de riesgos e impacto en la tríada de seguridad (CIA).
+- **Preparación y despliegue:** Instalación de Krayin CRM sobre Ubuntu Server con Apache, expuesto exclusivamente por HTTPS (puerto 443).
+- **Reconocimiento y escaneo:** Identificación del stack tecnológico y detección de fallos de configuración, incluyendo cabeceras de seguridad ausentes y archivos expuestos (`robots.txt`, `web.config`).
+- **Auditoría de código fuente:** Revisión de dependencias en busca de CVEs conocidos y trazado de flujos de datos para detectar puntos de inyección.
+- **Explotación:** Validación práctica de los hallazgos mediante ataques dirigidos y reproducibles.
+- **Análisis e informe:** Categorización de riesgos y evaluación de su impacto sobre la tríada CIA (Confidencialidad, Integridad, Disponibilidad).
 
 ## 4. Hallazgos Principales y Criticidad
-La auditoría reveló que, aunque el backend es robusto contra inyecciones SQL directas, existen fallos críticos en la capa de aplicación y configuración:
+La auditoría reveló que, si bien el backend presenta una protección sólida frente a inyecciones SQL directas, existen fallos críticos en la capa de aplicación y en la configuración del servidor:
 
 | Vulnerabilidad | Categoría | Criticidad | Estado |
 | :--- | :--- | :--- | :--- |
 | XSS Persistente | Inyección | Alta | Confirmada |
-| Fuerza Bruta exitosa | Autenticación | Alta | Confirmada |
+| Fuerza Bruta | Autenticación | Alta | Confirmada |
 | Dependencias Vulnerables | Gestión de Parches | Media | Potencial |
 | Clickjacking | Configuración Web | Media | Confirmada |
 | Divulgación de Información | Reconocimiento | Baja | Detectada |
 
-**Detalles de vulnerabilidades críticas:**
-- **XSS Persistente:** Permite inyectar etiquetas `<script>` en campos de perfil. La falta de bandera `httponly` en la cookie `XSRF-TOKEN` y la ausencia de una política CSP agravan el riesgo de secuestro de sesión.
-- **Fuerza Bruta:** Se logró comprometer el acceso mediante un script personalizado en Python que evade los tokens anti-CSRF, debido a la falta de mecanismos de bloqueo de cuenta.
-- **Dependencias:** Se detectaron librerías obsoletas con vulnerabilidades conocidas: `phpspreadsheet` (CVE-2025-54370) y `symfony/http-foundation` (CVE-2025-64500).
+**Detalle de las vulnerabilidades de mayor criticidad:**
+- **XSS Persistente:** Permite inyectar etiquetas `<script>` en campos de perfil de usuario. La ausencia del flag `HttpOnly` en la cookie `XSRF-TOKEN` y la falta de una política CSP agravan el riesgo de secuestro de sesión.
+- **Fuerza Bruta:** Se comprometió el acceso mediante un script Python que elude los tokens anti-CSRF, aprovechando la ausencia de mecanismos de bloqueo de cuenta tras múltiples intentos fallidos.
+- **Dependencias:** Se identificaron librerías desactualizadas con vulnerabilidades conocidas: `phpspreadsheet` (CVE-2025-54370) y `symfony/http-foundation` (CVE-2025-64500).
 
 ## 5. Conclusiones y Recomendaciones
-El riesgo global se sitúa en un nivel **ALTO**. Aunque la base del código es sólida en protección de datos, la facilidad para realizar ataques de XSS y fuerza bruta compromete la confidencialidad de la información comercial.
+El riesgo global de la aplicación se clasifica como **ALTO**. Aunque la lógica de acceso a datos es robusta, la exposición a ataques XSS y de fuerza bruta compromete directamente la confidencialidad de la información comercial gestionada por el CRM.
 
-**Se recomienda:**
-- Actualizar dependencias a versiones seguras.
-- Implementar cabeceras de seguridad (X-Frame-Options, HSTS, CSP).
-- Añadir capas de protección contra fuerza bruta (bloqueo de intentos).
-- Sanear rigurosamente los datos introducidos por usuarios para evitar XSS.
+**Medidas correctivas prioritarias:**
+- Actualizar todas las dependencias a versiones sin vulnerabilidades conocidas.
+- Implementar cabeceras de seguridad HTTP (`X-Frame-Options`, `HSTS`, `Content-Security-Policy`).
+- Introducir mecanismos de protección ante fuerza bruta: límite de intentos, CAPTCHA y bloqueo temporal de cuentas.
+- Aplicar sanitización estricta y escapado contextual de todos los datos introducidos por el usuario para prevenir XSS.
